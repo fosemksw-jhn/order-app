@@ -8,7 +8,7 @@ import Toast from '../components/Toast';
 import '../App.css';
 
 function Order() {
-  const { menus, addOrder, checkStock, inventory, loading, error } = useAppContext();
+  const { menus, addOrder, checkStock, inventory, loading, error, loadMenus, loadInventory } = useAppContext();
   const [cartItems, setCartItems] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -173,16 +173,64 @@ function Order() {
               }}>
                 <h3 style={{ marginBottom: '1rem' }}>⚠️ 메뉴를 불러올 수 없습니다</h3>
                 <p style={{ marginBottom: '0.5rem' }}>{error}</p>
-                <p style={{ fontSize: '0.9rem', opacity: 0.9 }}>
+                <p style={{ fontSize: '0.9rem', opacity: 0.9, marginBottom: '1rem' }}>
                   브라우저 개발자 도구(F12) → Console 탭에서 자세한 오류를 확인하세요.
                 </p>
-                <p style={{ fontSize: '0.9rem', opacity: 0.9, marginTop: '0.5rem' }}>
-                  API 서버가 실행 중인지 확인하거나, 환경 변수 설정을 확인해주세요.
-                </p>
+                <button
+                  onClick={async () => {
+                    try {
+                      await loadInventory();
+                      await loadMenus();
+                    } catch (err) {
+                      console.error('재시도 실패:', err);
+                    }
+                  }}
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    backgroundColor: 'white',
+                    color: '#ff4444',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '1rem',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  다시 시도
+                </button>
               </div>
             ) : availableMenuItems.length === 0 ? (
-              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem' }}>
-                메뉴가 없습니다.
+              <div style={{ 
+                gridColumn: '1 / -1', 
+                textAlign: 'center', 
+                padding: '2rem',
+                backgroundColor: '#f0f0f0',
+                borderRadius: '8px',
+                margin: '1rem 0'
+              }}>
+                <p style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>메뉴가 없습니다.</p>
+                <button
+                  onClick={async () => {
+                    try {
+                      await loadInventory();
+                      await loadMenus();
+                    } catch (err) {
+                      console.error('재시도 실패:', err);
+                    }
+                  }}
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    backgroundColor: '#ff6b9d',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '1rem',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  메뉴 다시 불러오기
+                </button>
               </div>
             ) : (
               availableMenuItems.map(menu => (

@@ -42,12 +42,49 @@ const apiRequest = async (endpoint, options = {}) => {
 
     return data;
   } catch (error) {
+    // 네트워크 오류인 경우 더 명확한 메시지 제공
+    let errorMessage = error.message;
+    
+    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+      errorMessage = `API 서버에 연결할 수 없습니다. 
+      
+가능한 원인:
+1. 백엔드 서버가 실행되지 않았습니다
+2. 환경 변수 VITE_API_BASE_URL이 설정되지 않았거나 잘못되었습니다
+3. CORS 설정 문제가 있습니다
+
+현재 API URL: ${url}
+환경 변수 VITE_API_BASE_URL: ${import.meta.env.VITE_API_BASE_URL || '설정되지 않음'}
+
+해결 방법:
+1. Render 대시보드에서 백엔드 서비스가 "Live" 상태인지 확인하세요
+2. 프론트엔드 Static Site의 Environment에서 VITE_API_BASE_URL을 확인하세요
+3. 백엔드 URL 형식: https://your-api.onrender.com/api`;
+    } else if (error.message.includes('404')) {
+      errorMessage = `API 엔드포인트를 찾을 수 없습니다: ${url}
+      
+백엔드 서버의 라우트 설정을 확인하세요.`;
+    } else if (error.message.includes('500')) {
+      errorMessage = `서버 내부 오류가 발생했습니다: ${url}
+      
+백엔드 서버의 Logs를 확인하세요.`;
+    }
+    
     console.error('API 요청 오류:', {
       url,
-      error: error.message,
-      stack: error.stack
+      error: errorMessage,
+      originalError: error.message,
+      stack: error.stack,
+      apiBaseUrl: API_BASE_URL,
+      envVar: import.meta.env.VITE_API_BASE_URL
     });
-    throw error;
+    
+    // 에러 객체에 더 많은 정보 추가
+    const enhancedError = new Error(errorMessage);
+    enhancedError.originalError = error;
+    enhancedError.url = url;
+    enhancedError.apiBaseUrl = API_BASE_URL;
+    throw enhancedError;
   }
 };
 

@@ -9,14 +9,39 @@ const { Pool } = pg;
 let poolConfig;
 
 if (process.env.DATABASE_URL) {
+  // DATABASE_URL 검증 및 수정
+  let databaseUrl = process.env.DATABASE_URL.trim();
+  
+  // DATABASE_URL이 올바른 형식인지 확인
+  if (!databaseUrl.startsWith('postgresql://') && !databaseUrl.startsWith('postgres://')) {
+    console.error('❌ DATABASE_URL 형식 오류: postgresql:// 또는 postgres://로 시작해야 합니다.');
+    console.error('현재 DATABASE_URL:', databaseUrl.substring(0, 50) + '...');
+    throw new Error('DATABASE_URL 형식이 올바르지 않습니다.');
+  }
+  
+  // URL 파싱하여 검증
+  try {
+    const url = new URL(databaseUrl);
+    console.log('✅ DATABASE_URL 파싱 성공');
+    console.log('호스트:', url.hostname);
+    console.log('포트:', url.port || '5432 (기본값)');
+    console.log('데이터베이스:', url.pathname.slice(1));
+  } catch (urlError) {
+    console.error('❌ DATABASE_URL 파싱 실패:', urlError.message);
+    console.error('DATABASE_URL:', databaseUrl.substring(0, 100) + '...');
+    throw new Error(`DATABASE_URL 파싱 오류: ${urlError.message}`);
+  }
+  
   // Render.com에서 제공하는 DATABASE_URL 사용
   poolConfig = {
-    connectionString: process.env.DATABASE_URL,
+    connectionString: databaseUrl,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
     max: 20,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 2000,
   };
+  
+  console.log('데이터베이스 연결 설정 완료 (DATABASE_URL 사용)');
 } else {
   // 개별 환경 변수 사용 (로컬 개발)
   poolConfig = {
@@ -43,7 +68,12 @@ pool.on('connect', () => {
 });
 
 pool.on('error', (err) => {
-  console.error('데이터베이스 연결 오류:', err);
+  console.error('❌ 데이터베이스 연결 오류:', err.message);
+  console.error('오류 코드:', err.code);
+  if (err.code === 'ENOTFOUND') {
+    console.error('⚠️ DNS 조회 실패 - DATABASE_URL의 호스트명을 확인하세요.');
+    console.error('DATABASE_URL 형식: postgresql://user:password@host:port/database');
+  }
 });
 
 // 쿼리 실행 헬퍼 함수

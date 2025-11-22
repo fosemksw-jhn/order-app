@@ -201,22 +201,34 @@ export const AppProvider = ({ children }) => {
   // 주문 추가 함수
   const addOrder = useCallback(async (cartItems) => {
     try {
+      console.log('주문 데이터 준비 시작:', cartItems);
+      
       // 주문 데이터 준비
-      const items = cartItems.map(item => ({
-        menu_id: item.id,
-        quantity: item.quantity,
-        options: item.options || [],
-        unit_price: item.price,
-        total_price: item.price * item.quantity
-      }));
+      const items = cartItems.map(item => {
+        const itemPrice = item.price || item.basePrice || 0;
+        return {
+          menu_id: item.id,
+          quantity: item.quantity,
+          options: item.options || [],
+          unit_price: itemPrice,
+          total_price: itemPrice * item.quantity
+        };
+      });
 
-      const total_amount = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      const total_amount = cartItems.reduce((sum, item) => {
+        const itemPrice = item.price || item.basePrice || 0;
+        return sum + (itemPrice * item.quantity);
+      }, 0);
+
+      console.log('주문 데이터:', { items, total_amount });
 
       // API 호출
+      console.log('주문 API 호출...');
       const response = await orderAPI.createOrder({
         items,
         total_amount
       });
+      console.log('주문 API 응답:', response);
 
       // 주문 목록 새로고침
       await loadOrders();
@@ -230,9 +242,10 @@ export const AppProvider = ({ children }) => {
       };
     } catch (err) {
       console.error('주문 생성 실패:', err);
+      const errorMessage = err.message || '주문 생성에 실패했습니다.';
       return {
         success: false,
-        message: err.message || '주문 생성에 실패했습니다.'
+        message: errorMessage
       };
     }
   }, [loadOrders, loadInventory]);

@@ -116,22 +116,33 @@ function Order() {
       return;
     }
 
+    console.log('주문 시작:', cartItems);
+
     // 재고 확인
     const stockCheck = checkStock(cartItems);
     if (!stockCheck.isValid) {
+      console.warn('재고 확인 실패:', stockCheck.issues);
       showToast(stockCheck.issues.join(', '));
       return;
     }
 
-    // 주문 추가
-    const result = await addOrder(cartItems);
-    
-    if (result.success) {
-      showToast(`주문이 완료되었습니다! 주문번호: ${result.orderNumber}`);
-      setCartItems([]);
-      setIsCartOpen(false);
-    } else {
-      showToast(result.message);
+    try {
+      // 주문 추가
+      console.log('주문 API 호출 시작...');
+      const result = await addOrder(cartItems);
+      console.log('주문 결과:', result);
+      
+      if (result.success) {
+        showToast(`주문이 완료되었습니다! 주문번호: ${result.orderNumber}`);
+        setCartItems([]);
+        setIsCartOpen(false);
+      } else {
+        console.error('주문 실패:', result.message);
+        showToast(result.message || '주문에 실패했습니다. 다시 시도해주세요.');
+      }
+    } catch (error) {
+      console.error('주문 처리 중 오류:', error);
+      showToast(`주문 처리 중 오류가 발생했습니다: ${error.message || '알 수 없는 오류'}`);
     }
   };
 

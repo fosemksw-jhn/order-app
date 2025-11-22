@@ -1,8 +1,19 @@
 // API 기본 URL 설정
 // 개발 환경: http://localhost:3000/api
 // 프로덕션 환경: Render에서 설정한 VITE_API_BASE_URL 사용
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
+// VITE_API_BASE_URL에 /api가 없으면 자동으로 추가
+let API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
   (import.meta.env.DEV ? 'http://localhost:3000/api' : '/api');
+
+// VITE_API_BASE_URL이 설정되어 있고 /api로 끝나지 않으면 자동으로 추가
+if (import.meta.env.VITE_API_BASE_URL && !import.meta.env.DEV) {
+  const envUrl = import.meta.env.VITE_API_BASE_URL.trim();
+  // http:// 또는 https://로 시작하고 /api로 끝나지 않으면 추가
+  if ((envUrl.startsWith('http://') || envUrl.startsWith('https://')) && !envUrl.endsWith('/api')) {
+    API_BASE_URL = envUrl.endsWith('/') ? `${envUrl}api` : `${envUrl}/api`;
+    console.log('API_BASE_URL 자동 수정:', import.meta.env.VITE_API_BASE_URL, '->', API_BASE_URL);
+  }
+}
 
 // 디버깅을 위한 API URL 로그 (프로덕션에서도 확인 가능)
 console.log('API_BASE_URL:', API_BASE_URL);

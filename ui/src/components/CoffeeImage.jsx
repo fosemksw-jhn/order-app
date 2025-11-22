@@ -4,15 +4,39 @@ import { useState } from 'react';
 function CoffeeImage({ name, image }) {
   const [imageError, setImageError] = useState(false);
 
+  // 이미지 경로 처리 함수
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    
+    // 이미 절대 URL인 경우 (http:// 또는 https://로 시작)
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+    
+    // 상대 경로인 경우 프론트엔드 public 폴더에서 제공
+    // 배포 환경에서는 /로 시작하는 경로가 프론트엔드 도메인을 기준으로 함
+    if (imagePath.startsWith('/')) {
+      return imagePath;
+    }
+    
+    // 파일명만 있는 경우 public 폴더에서 찾기
+    return `/${imagePath}`;
+  };
+
+  const imageUrl = getImageUrl(image);
+
   // 이미지 경로가 있고 에러가 없으면 실제 이미지 표시
-  if (image && !imageError) {
+  if (imageUrl && !imageError) {
     return (
       <div className="coffee-image-container">
         <img 
-          src={image} 
+          src={imageUrl} 
           alt={name}
           className="coffee-image"
-          onError={() => setImageError(true)}
+          onError={() => {
+            console.warn(`이미지 로드 실패: ${imageUrl} (원본 경로: ${image})`);
+            setImageError(true);
+          }}
         />
       </div>
     );

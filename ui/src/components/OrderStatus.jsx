@@ -20,7 +20,9 @@ function OrderStatus({ orders, onUpdateOrderStatus }) {
       <div className="order-list">
         {orders.length === 0 ? (
           <div className="order-empty">
+            <div className="empty-icon">📋</div>
             <p>주문이 없습니다.</p>
+            <p className="empty-subtitle">새로운 주문이 들어오면 여기에 표시됩니다.</p>
           </div>
         ) : (
           orders.map(order => (
@@ -58,6 +60,7 @@ function OrderStatus({ orders, onUpdateOrderStatus }) {
                   <button
                     className="order-action-btn"
                     onClick={() => handleStatusChange(order.id, '제조 중')}
+                    aria-label={`${order.orderNumber} 주문 제조 시작`}
                   >
                     제조 시작
                   </button>
@@ -66,6 +69,7 @@ function OrderStatus({ orders, onUpdateOrderStatus }) {
                   <button
                     className="order-action-btn complete"
                     onClick={() => handleStatusChange(order.id, '완료')}
+                    aria-label={`${order.orderNumber} 주문 제조 완료`}
                   >
                     제조 완료
                   </button>

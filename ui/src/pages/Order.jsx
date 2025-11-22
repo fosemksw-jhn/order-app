@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useAppContext } from '../context/AppContext';
 import Header from '../components/Header';
 import MenuCard from '../components/MenuCard';
 import Sidebar from '../components/Sidebar';
@@ -8,10 +9,23 @@ import { menuItems } from '../data/menuData';
 import '../App.css';
 
 function Order() {
+  const { addOrder, checkStock, inventory } = useAppContext();
   const [cartItems, setCartItems] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [isToastVisible, setIsToastVisible] = useState(false);
+
+  // 재고 정보를 포함한 메뉴 목록
+  const availableMenuItems = useMemo(() => {
+    return menuItems.map(menu => {
+      const inventoryItem = inventory.find(inv => inv.name === menu.name);
+      return {
+        ...menu,
+        stock: inventoryItem ? inventoryItem.stock : 0,
+        isAvailable: inventoryItem ? inventoryItem.stock > 0 : false
+      };
+    });
+  }, [inventory]);
 
   const showToast = (message) => {
     setToastMessage(message);
@@ -19,9 +33,22 @@ function Order() {
   };
 
   const handleAddToCart = (menu) => {
+    // 재고 확인
+    const inventoryItem = inventory.find(inv => inv.name === menu.name);
+    if (!inventoryItem || inventoryItem.stock === 0) {
+      showToast(`${menu.name}은(는) 현재 품절입니다.`);
+      return;
+    }
+
     const existingItem = cartItems.find(item => item.id === menu.id);
     
     if (existingItem) {
+      // 재고 확인 (장바구니에 있는 수량 + 1이 재고보다 많으면 안됨)
+      if (existingItem.quantity + 1 > inventoryItem.stock) {
+        showToast(`${menu.name}의 재고가 부족합니다. (현재 재고: ${inventoryItem.stock}개)`);
+        return;
+      }
+      
       setCartItems(cartItems.map(item =>
         item.id === menu.id
           ? { ...item, quantity: item.quantity + 1 }
@@ -38,6 +65,15 @@ function Order() {
     if (newQuantity <= 0) {
       handleRemoveItem(id);
       return;
+    }
+
+    const cartItem = cartItems.find(item => item.id === id);
+    if (cartItem) {
+      const inventoryItem = inventory.find(inv => inv.name === cartItem.name);
+      if (inventoryItem && newQuantity > inventoryItem.stock) {
+        showToast(`${cartItem.name}의 재고가 부족합니다. (현재 재고: ${inventoryItem.stock}개)`);
+        return;
+      }
     }
     
     setCartItems(cartItems.map(item =>
@@ -56,10 +92,24 @@ function Order() {
       showToast('장바구니가 비어있습니다.');
       return;
     }
+
+    // 재고 확인
+    const stockCheck = checkStock(cartItems);
+    if (!stockCheck.isValid) {
+      showToast(stockCheck.issues.join(', '));
+      return;
+    }
+
+    // 주문 추가
+    const result = addOrder(cartItems);
     
-    showToast('주문이 완료되었습니다!');
-    setCartItems([]);
-    setIsCartOpen(false);
+    if (result.success) {
+      showToast(`주문이 완료되었습니다! 주문번호: ${result.orderNumber}`);
+      setCartItems([]);
+      setIsCartOpen(false);
+    } else {
+      showToast(result.message);
+    }
   };
 
   return (
@@ -84,11 +134,13 @@ function Order() {
           </div>
 
           <div className="menu-grid">
-            {menuItems.map(menu => (
+            {availableMenuItems.map(menu => (
               <MenuCard
                 key={menu.id}
                 menu={menu}
                 onAddToCart={handleAddToCart}
+                isAvailable={menu.isAvailable}
+                stock={menu.stock}
               />
             ))}
           </div>

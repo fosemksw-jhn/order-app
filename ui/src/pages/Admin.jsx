@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAppContext } from '../context/AppContext';
 import AdminHeader from '../components/AdminHeader';
 import Dashboard from '../components/Dashboard';
 import InventoryStatus from '../components/InventoryStatus';
@@ -10,43 +11,10 @@ import './Admin.css';
 
 function Admin() {
   const navigate = useNavigate();
+  const { inventory, orders, updateInventory, updateOrderStatus } = useAppContext();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [toastMessage, setToastMessage] = useState('');
   const [isToastVisible, setIsToastVisible] = useState(false);
-  
-  // 재고 데이터 (초기값)
-  const [inventory, setInventory] = useState([
-    { id: 1, name: '아메리카노', stock: 10 },
-    { id: 2, name: '카페라떼', stock: 3 },
-    { id: 3, name: '카푸치노', stock: 0 }
-  ]);
-
-  // 주문 데이터 (초기값)
-  const [orders, setOrders] = useState([
-    {
-      id: 1,
-      orderNumber: 'ORD-001',
-      date: '2025-01-20',
-      time: '14:30',
-      items: [
-        { name: '아메리카노', quantity: 2, price: 4000 },
-        { name: '카페라떼', quantity: 1, price: 4500 }
-      ],
-      total: 12500,
-      status: '주문 접수'
-    },
-    {
-      id: 2,
-      orderNumber: 'ORD-002',
-      date: '2025-01-20',
-      time: '14:25',
-      items: [
-        { name: '카푸치노', quantity: 1, price: 4500 }
-      ],
-      total: 4500,
-      status: '제조 중'
-    }
-  ]);
 
   const showToast = (message) => {
     setToastMessage(message);
@@ -54,27 +22,32 @@ function Admin() {
   };
 
   const handleUpdateInventory = (id, newStock) => {
-    setInventory(inventory.map(item =>
-      item.id === id ? { ...item, stock: newStock } : item
-    ));
+    updateInventory(id, newStock);
     showToast('재고가 수정되었습니다.');
   };
 
   const handleUpdateOrderStatus = (orderId, newStatus) => {
-    setOrders(orders.map(order =>
-      order.id === orderId ? { ...order, status: newStatus } : order
-    ));
+    updateOrderStatus(orderId, newStatus);
     showToast('주문 상태가 변경되었습니다.');
   };
 
-  // 대시보드 통계 계산
-  const dashboardStats = {
+  // 대시보드 통계 계산 (메모이제이션)
+  const dashboardStats = useMemo(() => ({
     totalOrders: orders.length,
     pendingOrders: orders.filter(o => o.status === '주문 접수').length,
     inProgressOrders: orders.filter(o => o.status === '제조 중').length,
     completedOrders: orders.filter(o => o.status === '완료').length,
     lowStockItems: inventory.filter(i => i.stock < 5 && i.stock > 0).length
-  };
+  }), [orders, inventory]);
+
+  // 주문 목록 정렬 (최신순)
+  const sortedOrders = useMemo(() => {
+    return [...orders].sort((a, b) => {
+      const dateA = new Date(`${a.date} ${a.time}`);
+      const dateB = new Date(`${b.date} ${b.time}`);
+      return dateB - dateA;
+    });
+  }, [orders]);
 
   return (
     <div className="admin-app">
@@ -125,7 +98,7 @@ function Admin() {
             )}
             {activeTab === 'orders' && (
               <OrderStatus
-                orders={orders}
+                orders={sortedOrders}
                 onUpdateOrderStatus={handleUpdateOrderStatus}
               />
             )}

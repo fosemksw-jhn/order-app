@@ -7,16 +7,35 @@ function Cart({ isOpen, onClose, cartItems, onUpdateQuantity, onRemoveItem, onCh
 
   return (
     <>
-      <div className="cart-overlay" onClick={onClose}></div>
-      <div className="cart-sidebar">
+      <div 
+        className="cart-overlay" 
+        onClick={onClose}
+        aria-label="장바구니 닫기"
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape' || e.key === 'Enter') {
+            onClose();
+          }
+        }}
+      ></div>
+      <div className="cart-sidebar" role="dialog" aria-modal="true" aria-labelledby="cart-title">
         <div className="cart-header">
-          <h2>장바구니</h2>
-          <button className="close-button" onClick={onClose}>×</button>
+          <h2 id="cart-title">장바구니</h2>
+          <button 
+            className="close-button" 
+            onClick={onClose}
+            aria-label="장바구니 닫기"
+          >
+            ×
+          </button>
         </div>
         <div className="cart-body">
           {cartItems.length === 0 ? (
             <div className="cart-empty">
+              <div className="empty-icon">🛒</div>
               <p>장바구니가 비어있습니다.</p>
+              <p className="empty-subtitle">메뉴를 선택하여 장바구니에 추가해주세요.</p>
             </div>
           ) : (
             <div className="cart-layout">

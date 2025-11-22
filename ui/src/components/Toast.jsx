@@ -14,7 +14,12 @@ function Toast({ message, isVisible, onClose }) {
   if (!isVisible) return null;
 
   return (
-    <div className="toast">
+    <div 
+      className="toast"
+      role="alert"
+      aria-live="polite"
+      aria-atomic="true"
+    >
       {message}
     </div>
   );

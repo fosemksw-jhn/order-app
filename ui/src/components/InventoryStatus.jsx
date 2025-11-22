@@ -40,13 +40,17 @@ function InventoryStatus({ inventory, onUpdateInventory }) {
                   className="inventory-btn decrease"
                   onClick={() => handleStockChange(item.id, -1)}
                   disabled={item.stock === 0}
+                  aria-label={`${item.name} 재고 1개 감소`}
                 >
                   -
                 </button>
-                <span className="inventory-stock-display">{item.stock}</span>
+                <span className="inventory-stock-display" aria-label={`${item.name} 현재 재고: ${item.stock}개`}>
+                  {item.stock}
+                </span>
                 <button
                   className="inventory-btn increase"
                   onClick={() => handleStockChange(item.id, 1)}
+                  aria-label={`${item.name} 재고 1개 증가`}
                 >
                   +
                 </button>

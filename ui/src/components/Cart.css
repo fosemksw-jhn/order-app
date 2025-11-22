@@ -74,10 +74,24 @@
 
 .cart-empty {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   height: 100%;
   color: #666666;
+  gap: 1rem;
+  padding: 2rem;
+}
+
+.cart-empty .empty-icon {
+  font-size: 4rem;
+  opacity: 0.5;
+}
+
+.cart-empty .empty-subtitle {
+  font-size: 0.875rem;
+  color: #999999;
+  margin: 0;
 }
 
 .cart-layout {

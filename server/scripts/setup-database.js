@@ -10,32 +10,53 @@ const { Pool } = pg;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// 관리자 권한으로 데이터베이스 생성용 연결
-const adminPoolConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT) || 5432,
-  user: process.env.DB_USER || 'postgres',
-  database: 'postgres', // 기본 데이터베이스에 연결
-};
+// Render.com의 DATABASE_URL 지원
+let adminPoolConfig, appPoolConfig;
 
-if (process.env.DB_PASSWORD) {
-  adminPoolConfig.password = process.env.DB_PASSWORD;
+if (process.env.DATABASE_URL) {
+  // Render.com에서 제공하는 DATABASE_URL 사용
+  // DATABASE_URL에서 데이터베이스 이름 추출
+  const dbUrl = new URL(process.env.DATABASE_URL);
+  const dbName = dbUrl.pathname.slice(1); // 첫 번째 '/' 제거
+  
+  // 관리자 연결 (postgres 데이터베이스에 연결)
+  const adminUrl = process.env.DATABASE_URL.replace(`/${dbName}`, '/postgres');
+  adminPoolConfig = {
+    connectionString: adminUrl,
+    ssl: { rejectUnauthorized: false },
+  };
+  
+  // 애플리케이션 연결
+  appPoolConfig = {
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+  };
+} else {
+  // 개별 환경 변수 사용 (로컬 개발)
+  adminPoolConfig = {
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT) || 5432,
+    user: process.env.DB_USER || 'postgres',
+    database: 'postgres',
+  };
+
+  if (process.env.DB_PASSWORD) {
+    adminPoolConfig.password = process.env.DB_PASSWORD;
+  }
+
+  appPoolConfig = {
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT) || 5432,
+    user: process.env.DB_USER || 'postgres',
+    database: process.env.DB_NAME || 'coffee_order_db',
+  };
+
+  if (process.env.DB_PASSWORD) {
+    appPoolConfig.password = process.env.DB_PASSWORD;
+  }
 }
 
 const adminPool = new Pool(adminPoolConfig);
-
-// 애플리케이션용 데이터베이스 연결
-const appPoolConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT) || 5432,
-  user: process.env.DB_USER || 'postgres',
-  database: process.env.DB_NAME || 'coffee_order_db',
-};
-
-if (process.env.DB_PASSWORD) {
-  appPoolConfig.password = process.env.DB_PASSWORD;
-}
-
 const appPool = new Pool(appPoolConfig);
 
 async function setupDatabase() {
@@ -45,18 +66,27 @@ async function setupDatabase() {
     console.log('데이터베이스 설정을 시작합니다...');
     
     // 1. 데이터베이스 존재 여부 확인 및 생성
-    const dbName = process.env.DB_NAME || 'coffee_order_db';
-    const checkDbResult = await client.query(
-      `SELECT 1 FROM pg_database WHERE datname = $1`,
-      [dbName]
-    );
-    
-    if (checkDbResult.rows.length === 0) {
-      console.log(`데이터베이스 '${dbName}' 생성 중...`);
-      await client.query(`CREATE DATABASE ${dbName}`);
-      console.log(`데이터베이스 '${dbName}' 생성 완료!`);
+    // Render.com에서는 데이터베이스가 이미 생성되어 있으므로 스킵
+    let dbName;
+    if (process.env.DATABASE_URL) {
+      const dbUrl = new URL(process.env.DATABASE_URL);
+      dbName = dbUrl.pathname.slice(1);
+      console.log(`Render.com 데이터베이스 사용: ${dbName}`);
+      console.log('데이터베이스는 이미 생성되어 있습니다.');
     } else {
-      console.log(`데이터베이스 '${dbName}'가 이미 존재합니다.`);
+      dbName = process.env.DB_NAME || 'coffee_order_db';
+      const checkDbResult = await client.query(
+        `SELECT 1 FROM pg_database WHERE datname = $1`,
+        [dbName]
+      );
+      
+      if (checkDbResult.rows.length === 0) {
+        console.log(`데이터베이스 '${dbName}' 생성 중...`);
+        await client.query(`CREATE DATABASE ${dbName}`);
+        console.log(`데이터베이스 '${dbName}' 생성 완료!`);
+      } else {
+        console.log(`데이터베이스 '${dbName}'가 이미 존재합니다.`);
+      }
     }
     
     client.release();

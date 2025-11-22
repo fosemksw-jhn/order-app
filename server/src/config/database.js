@@ -5,20 +5,34 @@ dotenv.config();
 
 const { Pool } = pg;
 
-// 데이터베이스 연결 풀 생성
-const poolConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT) || 5432,
-  database: process.env.DB_NAME || 'coffee_order_db',
-  user: process.env.DB_USER || 'postgres',
-  max: 20, // 최대 연결 수
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-};
+// Render.com의 DATABASE_URL 지원
+let poolConfig;
 
-// 비밀번호가 설정되어 있는 경우에만 추가
-if (process.env.DB_PASSWORD) {
-  poolConfig.password = process.env.DB_PASSWORD;
+if (process.env.DATABASE_URL) {
+  // Render.com에서 제공하는 DATABASE_URL 사용
+  poolConfig = {
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
+  };
+} else {
+  // 개별 환경 변수 사용 (로컬 개발)
+  poolConfig = {
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT) || 5432,
+    database: process.env.DB_NAME || 'coffee_order_db',
+    user: process.env.DB_USER || 'postgres',
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
+  };
+
+  // 비밀번호가 설정되어 있는 경우에만 추가
+  if (process.env.DB_PASSWORD) {
+    poolConfig.password = process.env.DB_PASSWORD;
+  }
 }
 
 const pool = new Pool(poolConfig);

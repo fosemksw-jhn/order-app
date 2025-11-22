@@ -7,9 +7,16 @@ export const getMenus = async (req, res, next) => {
       'SELECT id, name, description, price, image FROM menus ORDER BY id'
     );
     
+    // 이미지 경로 처리 (상대 경로를 절대 경로로 변환)
+    const menus = result.rows.map(menu => ({
+      ...menu,
+      // 이미지가 있고 절대 URL이 아니면 그대로 반환 (프론트엔드에서 처리)
+      image: menu.image || null
+    }));
+    
     res.json({
       success: true,
-      data: result.rows
+      data: menus
     });
   } catch (error) {
     next(error);
@@ -23,9 +30,16 @@ export const getMenusForAdmin = async (req, res, next) => {
       'SELECT id, name, description, price, image, stock FROM menus ORDER BY id'
     );
     
+    // 이미지 경로 처리 (상대 경로를 절대 경로로 변환)
+    const menus = result.rows.map(menu => ({
+      ...menu,
+      // 이미지가 있고 절대 URL이 아니면 그대로 반환 (프론트엔드에서 처리)
+      image: menu.image || null
+    }));
+    
     res.json({
       success: true,
-      data: result.rows
+      data: menus
     });
   } catch (error) {
     next(error);

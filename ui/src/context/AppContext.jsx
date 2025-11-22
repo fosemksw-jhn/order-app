@@ -28,12 +28,15 @@ export const AppProvider = ({ children }) => {
   // 메뉴 목록 로드 (일반 사용자용)
   const loadMenus = useCallback(async () => {
     try {
+      console.log('메뉴 로드 시작...');
       const response = await menuAPI.getMenus();
+      console.log('메뉴 로드 성공:', response);
       setMenus(response.data || []);
       setError(null);
     } catch (err) {
       console.error('메뉴 로드 실패:', err);
-      setError(err.message);
+      const errorMessage = err.message || '메뉴를 불러올 수 없습니다. API 서버를 확인해주세요.';
+      setError(errorMessage);
       // 에러가 발생해도 빈 배열로 설정하여 앱이 계속 작동하도록 함
       setMenus([]);
     }

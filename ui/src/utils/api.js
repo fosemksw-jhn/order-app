@@ -4,10 +4,18 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
   (import.meta.env.DEV ? 'http://localhost:3000/api' : '/api');
 
+// 디버깅을 위한 API URL 로그 (프로덕션에서도 확인 가능)
+console.log('API_BASE_URL:', API_BASE_URL);
+console.log('VITE_API_BASE_URL env:', import.meta.env.VITE_API_BASE_URL);
+console.log('DEV mode:', import.meta.env.DEV);
+
 // API 요청 헬퍼 함수
 const apiRequest = async (endpoint, options = {}) => {
+  const url = `${API_BASE_URL}${endpoint}`;
+  console.log('API 요청:', url, options);
+  
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const response = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
         ...options.headers,
@@ -15,15 +23,30 @@ const apiRequest = async (endpoint, options = {}) => {
       ...options,
     });
 
-    const data = await response.json();
+    console.log('API 응답 상태:', response.status, response.statusText);
+
+    // 응답이 JSON이 아닐 수 있으므로 확인
+    let data;
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      const text = await response.text();
+      console.error('JSON이 아닌 응답:', text);
+      throw new Error(`서버 응답 오류: ${response.status} ${response.statusText}`);
+    }
 
     if (!response.ok) {
-      throw new Error(data.message || 'API 요청 실패');
+      throw new Error(data.message || `API 요청 실패: ${response.status} ${response.statusText}`);
     }
 
     return data;
   } catch (error) {
-    console.error('API 요청 오류:', error);
+    console.error('API 요청 오류:', {
+      url,
+      error: error.message,
+      stack: error.stack
+    });
     throw error;
   }
 };

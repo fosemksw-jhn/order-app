@@ -8,7 +8,7 @@ import Toast from '../components/Toast';
 import '../App.css';
 
 function Order() {
-  const { menus, addOrder, checkStock, inventory, loading } = useAppContext();
+  const { menus, addOrder, checkStock, inventory, loading, error } = useAppContext();
   const [cartItems, setCartItems] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -160,6 +160,25 @@ function Order() {
             {loading ? (
               <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem' }}>
                 메뉴를 불러오는 중...
+              </div>
+            ) : error ? (
+              <div style={{ 
+                gridColumn: '1 / -1', 
+                textAlign: 'center', 
+                padding: '2rem',
+                backgroundColor: '#ff4444',
+                color: 'white',
+                borderRadius: '8px',
+                margin: '1rem 0'
+              }}>
+                <h3 style={{ marginBottom: '1rem' }}>⚠️ 메뉴를 불러올 수 없습니다</h3>
+                <p style={{ marginBottom: '0.5rem' }}>{error}</p>
+                <p style={{ fontSize: '0.9rem', opacity: 0.9 }}>
+                  브라우저 개발자 도구(F12) → Console 탭에서 자세한 오류를 확인하세요.
+                </p>
+                <p style={{ fontSize: '0.9rem', opacity: 0.9, marginTop: '0.5rem' }}>
+                  API 서버가 실행 중인지 확인하거나, 환경 변수 설정을 확인해주세요.
+                </p>
               </div>
             ) : availableMenuItems.length === 0 ? (
               <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem' }}>

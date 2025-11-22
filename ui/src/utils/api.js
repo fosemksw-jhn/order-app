@@ -1,4 +1,8 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+// API 기본 URL 설정
+// 개발 환경: http://localhost:3000/api
+// 프로덕션 환경: Render에서 설정한 VITE_API_BASE_URL 사용
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
+  (import.meta.env.DEV ? 'http://localhost:3000/api' : '/api');
 
 // API 요청 헬퍼 함수
 const apiRequest = async (endpoint, options = {}) => {

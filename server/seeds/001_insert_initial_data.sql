@@ -15,16 +15,6 @@ INSERT INTO menus (name, description, price, stock) VALUES
 ON CONFLICT DO NOTHING;
 
 -- 초기 주문 데이터 삽입 (선택적)
-INSERT INTO orders (order_number, order_date, status, total_amount) VALUES
-('ORD-20250120-143000-001', '2025-01-20 14:30:00', '주문 접수', 12500),
-('ORD-20250120-142500-002', '2025-01-20 14:25:00', '제조 중', 4500)
-ON CONFLICT (order_number) DO NOTHING;
-
--- 초기 주문 항목 데이터 삽입
-INSERT INTO order_items (order_id, menu_id, quantity, unit_price, total_price, options) VALUES
-(1, 1, 2, 4000, 8000, '[]'::jsonb),
-(1, 2, 1, 4500, 4500, '[]'::jsonb),
-(2, 3, 1, 4500, 4500, '[]'::jsonb)
-ON CONFLICT DO NOTHING;
+-- 주문 항목 삽입을 위해 실제 ID를 사용하므로 주문 데이터는 스크립트에서 처리
 
 

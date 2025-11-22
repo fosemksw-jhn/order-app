@@ -95,6 +95,17 @@ async function setupDatabase() {
     const appClient = await appPool.connect();
     
     try {
+      // 기존 테이블 삭제 (CASCADE로 외래 키 제약 조건도 함께 삭제)
+      console.log('기존 테이블 삭제 중...');
+      await appClient.query(`
+        DROP TABLE IF EXISTS order_items CASCADE;
+        DROP TABLE IF EXISTS orders CASCADE;
+        DROP TABLE IF EXISTS options CASCADE;
+        DROP TABLE IF EXISTS menus CASCADE;
+        DROP FUNCTION IF EXISTS update_updated_at_column() CASCADE;
+      `);
+      console.log('기존 테이블 삭제 완료!');
+      
       // 마이그레이션 파일 읽기 및 실행
       console.log('테이블 생성 중...');
       const migrationPath = join(__dirname, '../migrations/001_create_tables.sql');
@@ -109,6 +120,44 @@ async function setupDatabase() {
       const seedSQL = readFileSync(seedPath, 'utf8');
       
       await appClient.query(seedSQL);
+      
+      // 주문 데이터 삽입 (실제 ID를 사용하기 위해 별도로 처리)
+      const orderResult1 = await appClient.query(`
+        INSERT INTO orders (order_number, order_date, status, total_amount) 
+        VALUES ('ORD-20250120-143000-001', '2025-01-20 14:30:00', '주문 접수', 12500)
+        ON CONFLICT (order_number) DO NOTHING
+        RETURNING id
+      `);
+      
+      const orderResult2 = await appClient.query(`
+        INSERT INTO orders (order_number, order_date, status, total_amount) 
+        VALUES ('ORD-20250120-142500-002', '2025-01-20 14:25:00', '제조 중', 4500)
+        ON CONFLICT (order_number) DO NOTHING
+        RETURNING id
+      `);
+      
+      // 주문 항목 삽입 (실제 ID 사용)
+      if (orderResult1.rows.length > 0 && orderResult1.rows[0].id) {
+        const orderId1 = orderResult1.rows[0].id;
+        await appClient.query(`
+          INSERT INTO order_items (order_id, menu_id, quantity, unit_price, total_price, options) 
+          VALUES 
+            ($1, 1, 2, 4000, 8000, '[]'::jsonb),
+            ($1, 2, 1, 4500, 4500, '[]'::jsonb)
+          ON CONFLICT DO NOTHING
+        `, [orderId1]);
+      }
+      
+      if (orderResult2.rows.length > 0 && orderResult2.rows[0].id) {
+        const orderId2 = orderResult2.rows[0].id;
+        // menu_id=3은 카푸치노 (menus 테이블의 세 번째 항목)
+        await appClient.query(`
+          INSERT INTO order_items (order_id, menu_id, quantity, unit_price, total_price, options) 
+          VALUES ($1, 3, 1, 4500, 4500, '[]'::jsonb)
+          ON CONFLICT DO NOTHING
+        `, [orderId2]);
+      }
+      
       console.log('초기 데이터 삽입 완료!');
       
       // 연결 테스트

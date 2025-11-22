@@ -1,0 +1,36 @@
+services:
+  # 백엔드 API 서버
+  - type: web
+    name: coffee-order-api
+    env: node
+    region: oregon  # 또는 원하는 지역 (singapore, frankfurt 등)
+    plan: free
+    buildCommand: cd server && npm install
+    startCommand: cd server && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: coffee-order-db
+          property: connectionString
+
+databases:
+  # PostgreSQL 데이터베이스
+  - name: coffee-order-db
+    databaseName: coffee_order_db
+    user: coffee_order_user
+    plan: free
+    region: oregon  # 백엔드와 같은 지역 선택
+
+staticSites:
+  # 프론트엔드
+  # 주의: VITE_API_BASE_URL은 배포 후 수동으로 설정해야 합니다
+  # Render 대시보드 → Static Site → Environment에서 설정
+  # 예: https://coffee-order-api.onrender.com/api
+  - name: coffee-order-app
+    buildCommand: cd ui && npm install && npm run build
+    publishPath: ui/dist
+

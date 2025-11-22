@@ -83,8 +83,10 @@ CREATE DATABASE coffee_order_db;
 데이터베이스 연결을 테스트하려면:
 
 ```bash
-npm run test-connection
+npm run setup-db
 ```
+
+이 명령어는 데이터베이스 연결을 테스트하고 테이블을 생성합니다.
 
 ## 실행
 

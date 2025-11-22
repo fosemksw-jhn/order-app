@@ -109,33 +109,6 @@ export const AppProvider = ({ children }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // setInventory 래퍼 (추가 로직이 필요할 경우)
-  const setInventory = useCallback((newInventory) => {
-    setInventoryState(newInventory);
-  }, []);
-
-  // setOrders 래퍼
-  const setOrders = useCallback((newOrders) => {
-    setOrdersState(newOrders);
-  }, []);
-
-  // 주문 번호 생성 함수
-  const generateOrderNumber = useCallback(() => {
-    const now = new Date();
-    const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
-    const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, '');
-    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    return `ORD-${dateStr}-${timeStr}-${random}`;
-  }, []);
-
-  // 날짜/시간 포맷 함수
-  const formatDateTime = useCallback(() => {
-    const now = new Date();
-    const date = now.toISOString().slice(0, 10);
-    const time = now.toTimeString().slice(0, 5);
-    return { date, time };
-  }, []);
-
   // 재고 확인 함수
   const checkStock = useCallback((cartItems) => {
     const stockIssues = [];

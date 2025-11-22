@@ -5,11 +5,10 @@ import MenuCard from '../components/MenuCard';
 import Sidebar from '../components/Sidebar';
 import Cart from '../components/Cart';
 import Toast from '../components/Toast';
-import { menuItems } from '../data/menuData';
 import '../App.css';
 
 function Order() {
-  const { addOrder, checkStock, inventory } = useAppContext();
+  const { menus, addOrder, checkStock, inventory, loading } = useAppContext();
   const [cartItems, setCartItems] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -17,30 +16,42 @@ function Order() {
 
   // 재고 정보를 포함한 메뉴 목록
   const availableMenuItems = useMemo(() => {
-    return menuItems.map(menu => {
-      const inventoryItem = inventory.find(inv => inv.name === menu.name);
+    return menus.map(menu => {
+      const inventoryItem = inventory.find(inv => inv.id === menu.id);
       return {
         ...menu,
         stock: inventoryItem ? inventoryItem.stock : 0,
         isAvailable: inventoryItem ? inventoryItem.stock > 0 : false
       };
     });
-  }, [inventory]);
+  }, [menus, inventory]);
 
   const showToast = (message) => {
     setToastMessage(message);
     setIsToastVisible(true);
   };
 
-  const handleAddToCart = (menu) => {
+  const handleAddToCart = (menu, options = []) => {
     // 재고 확인
-    const inventoryItem = inventory.find(inv => inv.name === menu.name);
+    const inventoryItem = inventory.find(inv => inv.id === menu.id);
     if (!inventoryItem || inventoryItem.stock === 0) {
       showToast(`${menu.name}은(는) 현재 품절입니다.`);
       return;
     }
 
-    const existingItem = cartItems.find(item => item.id === menu.id);
+    // 옵션 가격 계산
+    const optionPrice = options.reduce((sum, opt) => sum + opt.price, 0);
+    const totalPrice = menu.price + optionPrice;
+
+    // 옵션을 문자열로 변환하여 비교 (같은 옵션 조합인지 확인)
+    const optionsKey = JSON.stringify(options.map(opt => opt.id).sort());
+
+    // 같은 메뉴와 같은 옵션 조합이 있는지 확인
+    const existingItem = cartItems.find(item => {
+      if (item.id !== menu.id) return false;
+      const itemOptionsKey = JSON.stringify((item.options || []).map(opt => opt.id).sort());
+      return itemOptionsKey === optionsKey;
+    });
     
     if (existingItem) {
       // 재고 확인 (장바구니에 있는 수량 + 1이 재고보다 많으면 안됨)
@@ -50,26 +61,38 @@ function Order() {
       }
       
       setCartItems(cartItems.map(item =>
-        item.id === menu.id
+        item.cartId === existingItem.cartId
           ? { ...item, quantity: item.quantity + 1 }
           : item
       ));
     } else {
-      setCartItems([...cartItems, { ...menu, quantity: 1 }]);
+      // 새로운 항목 추가 (고유한 cartId 생성)
+      const cartId = `${menu.id}-${Date.now()}-${Math.random()}`;
+      setCartItems([...cartItems, { 
+        ...menu, 
+        cartId,
+        quantity: 1,
+        options: options,
+        price: totalPrice, // 옵션 포함 가격
+        basePrice: menu.price // 기본 가격 저장
+      }]);
     }
     
-    showToast(`${menu.name}이(가) 장바구니에 추가되었습니다.`);
+    const optionText = options.length > 0 
+      ? ` (${options.map(opt => opt.name).join(', ')})`
+      : '';
+    showToast(`${menu.name}${optionText}이(가) 장바구니에 추가되었습니다.`);
   };
 
-  const handleUpdateQuantity = (id, newQuantity) => {
+  const handleUpdateQuantity = (cartId, newQuantity) => {
     if (newQuantity <= 0) {
-      handleRemoveItem(id);
+      handleRemoveItem(cartId);
       return;
     }
 
-    const cartItem = cartItems.find(item => item.id === id);
+    const cartItem = cartItems.find(item => item.cartId === cartId);
     if (cartItem) {
-      const inventoryItem = inventory.find(inv => inv.name === cartItem.name);
+      const inventoryItem = inventory.find(inv => inv.id === cartItem.id);
       if (inventoryItem && newQuantity > inventoryItem.stock) {
         showToast(`${cartItem.name}의 재고가 부족합니다. (현재 재고: ${inventoryItem.stock}개)`);
         return;
@@ -77,17 +100,17 @@ function Order() {
     }
     
     setCartItems(cartItems.map(item =>
-      item.id === id
+      item.cartId === cartId
         ? { ...item, quantity: newQuantity }
         : item
     ));
   };
 
-  const handleRemoveItem = (id) => {
-    setCartItems(cartItems.filter(item => item.id !== id));
+  const handleRemoveItem = (cartId) => {
+    setCartItems(cartItems.filter(item => item.cartId !== cartId));
   };
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (cartItems.length === 0) {
       showToast('장바구니가 비어있습니다.');
       return;
@@ -101,7 +124,7 @@ function Order() {
     }
 
     // 주문 추가
-    const result = addOrder(cartItems);
+    const result = await addOrder(cartItems);
     
     if (result.success) {
       showToast(`주문이 완료되었습니다! 주문번호: ${result.orderNumber}`);
@@ -134,15 +157,25 @@ function Order() {
           </div>
 
           <div className="menu-grid">
-            {availableMenuItems.map(menu => (
-              <MenuCard
-                key={menu.id}
-                menu={menu}
-                onAddToCart={handleAddToCart}
-                isAvailable={menu.isAvailable}
-                stock={menu.stock}
-              />
-            ))}
+            {loading ? (
+              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem' }}>
+                메뉴를 불러오는 중...
+              </div>
+            ) : availableMenuItems.length === 0 ? (
+              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '2rem' }}>
+                메뉴가 없습니다.
+              </div>
+            ) : (
+              availableMenuItems.map(menu => (
+                <MenuCard
+                  key={menu.id}
+                  menu={menu}
+                  onAddToCart={handleAddToCart}
+                  isAvailable={menu.isAvailable}
+                  stock={menu.stock}
+                />
+              ))
+            )}
           </div>
         </div>
       </main>

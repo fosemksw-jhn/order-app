@@ -1,6 +1,8 @@
+import { useNavigate } from 'react-router-dom';
 import './Header.css';
 
 function Header({ cartItems, onCartClick }) {
+  const navigate = useNavigate();
   const cartItemCount = cartItems.reduce((total, item) => total + item.quantity, 0);
 
   return (
@@ -84,6 +86,26 @@ function Header({ cartItems, onCartClick }) {
               </svg>
             </a>
           </div>
+          <button 
+            className="admin-button" 
+            onClick={() => navigate('/admin')}
+            title="관리자 화면"
+          >
+            <svg 
+              width="20" 
+              height="20" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2"
+            >
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            <span className="admin-button-text">관리자</span>
+          </button>
           <button className="cart-button" onClick={onCartClick}>
             <svg 
               width="24" 

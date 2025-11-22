@@ -112,6 +112,30 @@
   color: #FFFFFF;
 }
 
+.admin-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #f3f4f6;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  color: #666666;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.admin-button:hover {
+  background-color: #2563eb;
+  color: #FFFFFF;
+}
+
+.admin-button-text {
+  white-space: nowrap;
+}
+
 .cart-button {
   position: relative;
   background: none;
@@ -173,6 +197,17 @@
 
   .social-icons {
     display: none;
+  }
+
+  .admin-button-text {
+    display: none;
+  }
+
+  .admin-button {
+    padding: 0.5rem;
+    width: 36px;
+    height: 36px;
+    justify-content: center;
   }
 }
 

@@ -21,14 +21,22 @@ function Admin() {
     setIsToastVisible(true);
   };
 
-  const handleUpdateInventory = (id, newStock) => {
-    updateInventory(id, newStock);
-    showToast('재고가 수정되었습니다.');
+  const handleUpdateInventory = async (id, newStock) => {
+    const result = await updateInventory(id, newStock);
+    if (result.success) {
+      showToast('재고가 수정되었습니다.');
+    } else {
+      showToast(result.message || '재고 수정에 실패했습니다.');
+    }
   };
 
-  const handleUpdateOrderStatus = (orderId, newStatus) => {
-    updateOrderStatus(orderId, newStatus);
-    showToast('주문 상태가 변경되었습니다.');
+  const handleUpdateOrderStatus = async (orderId, newStatus) => {
+    const result = await updateOrderStatus(orderId, newStatus);
+    if (result.success) {
+      showToast('주문 상태가 변경되었습니다.');
+    } else {
+      showToast(result.message || '주문 상태 변경에 실패했습니다.');
+    }
   };
 
   // 대시보드 통계 계산 (메모이제이션)

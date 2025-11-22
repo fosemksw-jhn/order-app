@@ -91,14 +91,15 @@ export const createOrder = async (req, res, next) => {
           [item.menu_id]
         );
         
+        const insertedItem = itemResult.rows[0];
         orderItems.push({
-          id: itemResult.rows[0].id,
+          id: insertedItem.id,
           menu_id: item.menu_id,
           menu_name: menuResult.rows[0].name,
-          quantity: itemResult.rows[0].quantity,
-          unit_price: itemResult.rows[0].unit_price,
-          total_price: itemResult.rows[0].total_price,
-          options: itemResult.rows[0].options ? JSON.parse(itemResult.rows[0].options) : []
+          quantity: insertedItem.quantity,
+          unit_price: insertedItem.unit_price,
+          total_price: insertedItem.total_price,
+          options: insertedItem.options ? JSON.parse(insertedItem.options) : []
         });
       }
       

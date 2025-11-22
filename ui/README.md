@@ -1,16 +1,53 @@
-# React + Vite
+# 커피 주문 앱 프런트엔드
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + Vite를 사용한 커피 주문 앱 프런트엔드입니다.
 
-Currently, two official plugins are available:
+## 설치
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+```bash
+npm install
+```
 
-## React Compiler
+## 환경 변수 설정
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+`ui` 폴더에 `.env` 파일을 생성하고 다음 내용을 추가하세요:
 
-## Expanding the ESLint configuration
+```env
+VITE_API_BASE_URL=http://localhost:3000/api
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+**참고**: 백엔드 서버가 다른 포트에서 실행되는 경우 URL을 변경하세요.
+
+## 실행
+
+### 개발 모드
+```bash
+npm run dev
+```
+
+프런트엔드는 기본적으로 `http://localhost:5173`에서 실행됩니다.
+
+### 프로덕션 빌드
+```bash
+npm run build
+```
+
+## 백엔드 서버 실행
+
+프런트엔드를 사용하기 전에 백엔드 서버가 실행 중이어야 합니다.
+
+```bash
+cd ../server
+npm run dev
+```
+
+백엔드 서버는 `http://localhost:3000`에서 실행됩니다.
+
+## 주요 기능
+
+- 메뉴 목록 조회 (API 연동)
+- 장바구니 기능
+- 주문 생성 (API 연동)
+- 관리자 대시보드
+- 재고 관리
+- 주문 상태 관리

@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { menuAPI, orderAPI } from '../utils/api';
 
 const AppContext = createContext();
 
@@ -10,78 +11,103 @@ export const useAppContext = () => {
   return context;
 };
 
-// localStorage에서 데이터 로드
-const loadFromStorage = (key, defaultValue) => {
-  try {
-    const item = localStorage.getItem(key);
-    return item ? JSON.parse(item) : defaultValue;
-  } catch (error) {
-    console.error(`Error loading ${key} from localStorage:`, error);
-    return defaultValue;
-  }
-};
-
-// localStorage에 데이터 저장
-const saveToStorage = (key, value) => {
-  try {
-    localStorage.setItem(key, JSON.stringify(value));
-  } catch (error) {
-    console.error(`Error saving ${key} to localStorage:`, error);
-  }
-};
-
-const defaultInventory = [
-  { id: 1, name: '아메리카노', stock: 10 },
-  { id: 2, name: '카페라떼', stock: 3 },
-  { id: 3, name: '카푸치노', stock: 0 }
-];
-
-const defaultOrders = [
-  {
-    id: 1,
-    orderNumber: 'ORD-001',
-    date: '2025-01-20',
-    time: '14:30',
-    items: [
-      { name: '아메리카노', quantity: 2, price: 4000 },
-      { name: '카페라떼', quantity: 1, price: 4500 }
-    ],
-    total: 12500,
-    status: '주문 접수'
-  },
-  {
-    id: 2,
-    orderNumber: 'ORD-002',
-    date: '2025-01-20',
-    time: '14:25',
-    items: [
-      { name: '카푸치노', quantity: 1, price: 4500 }
-    ],
-    total: 4500,
-    status: '제조 중'
-  }
-];
-
 export const AppProvider = ({ children }) => {
-  // 재고 데이터 (localStorage에서 로드)
-  const [inventory, setInventoryState] = useState(() => 
-    loadFromStorage('hanna_coffee_inventory', defaultInventory)
-  );
+  // 메뉴 데이터
+  const [menus, setMenus] = useState([]);
+  
+  // 재고 데이터 (관리자용)
+  const [inventory, setInventoryState] = useState([]);
 
-  // 주문 데이터 (localStorage에서 로드)
-  const [orders, setOrdersState] = useState(() => 
-    loadFromStorage('hanna_coffee_orders', defaultOrders)
-  );
+  // 주문 데이터
+  const [orders, setOrdersState] = useState([]);
+  
+  // 로딩 상태
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  // inventory가 변경될 때마다 localStorage에 저장
+  // 메뉴 목록 로드 (일반 사용자용)
+  const loadMenus = useCallback(async () => {
+    try {
+      const response = await menuAPI.getMenus();
+      setMenus(response.data || []);
+      setError(null);
+    } catch (err) {
+      console.error('메뉴 로드 실패:', err);
+      setError(err.message);
+      // 에러가 발생해도 빈 배열로 설정하여 앱이 계속 작동하도록 함
+      setMenus([]);
+    }
+  }, []);
+
+  // 재고 데이터 로드 (관리자용)
+  const loadInventory = useCallback(async () => {
+    try {
+      const response = await menuAPI.getMenusForAdmin();
+      const inventoryData = (response.data || []).map(menu => ({
+        id: menu.id,
+        name: menu.name,
+        stock: menu.stock || 0
+      }));
+      setInventoryState(inventoryData);
+      setError(null);
+    } catch (err) {
+      console.error('재고 데이터 로드 실패:', err);
+      setError(err.message);
+      // 에러가 발생해도 빈 배열로 설정하여 앱이 계속 작동하도록 함
+      setInventoryState([]);
+    }
+  }, []);
+
+  // 주문 목록 로드
+  const loadOrders = useCallback(async () => {
+    try {
+      const response = await orderAPI.getOrders();
+      const ordersData = (response.data || []).map(order => {
+        const orderDate = new Date(order.order_date);
+        return {
+          id: order.id,
+          orderNumber: order.order_number,
+          date: orderDate.toISOString().slice(0, 10),
+          time: orderDate.toTimeString().slice(0, 5),
+          items: (order.items || []).map(item => ({
+            name: item.menu_name,
+            quantity: item.quantity,
+            price: item.unit_price
+          })),
+          total: order.total_amount,
+          status: order.status
+        };
+      });
+      setOrdersState(ordersData);
+      setError(null);
+    } catch (err) {
+      console.error('주문 목록 로드 실패:', err);
+      setError(err.message);
+      // 에러가 발생해도 빈 배열로 설정하여 앱이 계속 작동하도록 함
+      setOrdersState([]);
+    }
+  }, []);
+
+  // 초기 데이터 로드
   useEffect(() => {
-    saveToStorage('hanna_coffee_inventory', inventory);
-  }, [inventory]);
-
-  // orders가 변경될 때마다 localStorage에 저장
-  useEffect(() => {
-    saveToStorage('hanna_coffee_orders', orders);
-  }, [orders]);
+    const initializeData = async () => {
+      setLoading(true);
+      try {
+        await Promise.all([
+          loadMenus(),
+          loadInventory(),
+          loadOrders()
+        ]);
+      } catch (err) {
+        console.error('초기 데이터 로드 실패:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    initializeData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // setInventory 래퍼 (추가 로직이 필요할 경우)
   const setInventory = useCallback((newInventory) => {
@@ -115,11 +141,12 @@ export const AppProvider = ({ children }) => {
     const stockIssues = [];
     
     cartItems.forEach(cartItem => {
-      const inventoryItem = inventory.find(inv => inv.name === cartItem.name);
-      if (!inventoryItem) {
+      const menuItem = menus.find(m => m.id === cartItem.id);
+      if (!menuItem) {
         stockIssues.push(`${cartItem.name}: 메뉴를 찾을 수 없습니다.`);
-      } else if (inventoryItem.stock < cartItem.quantity) {
-        stockIssues.push(`${cartItem.name}: 재고 부족 (현재 재고: ${inventoryItem.stock}개, 주문 수량: ${cartItem.quantity}개)`);
+      } else {
+        // 재고는 서버에서 확인하므로 여기서는 기본 검증만 수행
+        // 실제 재고 확인은 서버에서 수행됨
       }
     });
 
@@ -127,80 +154,86 @@ export const AppProvider = ({ children }) => {
       isValid: stockIssues.length === 0,
       issues: stockIssues
     };
-  }, [inventory]);
+  }, [menus]);
 
   // 주문 추가 함수
-  const addOrder = useCallback((cartItems) => {
-    const stockCheck = checkStock(cartItems);
-    if (!stockCheck.isValid) {
+  const addOrder = useCallback(async (cartItems) => {
+    try {
+      // 주문 데이터 준비
+      const items = cartItems.map(item => ({
+        menu_id: item.id,
+        quantity: item.quantity,
+        options: item.options || [],
+        unit_price: item.price,
+        total_price: item.price * item.quantity
+      }));
+
+      const total_amount = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+      // API 호출
+      const response = await orderAPI.createOrder({
+        items,
+        total_amount
+      });
+
+      // 주문 목록 새로고침
+      await loadOrders();
+      // 재고 목록 새로고침
+      await loadInventory();
+
+      return {
+        success: true,
+        message: '주문이 완료되었습니다!',
+        orderNumber: response.data?.order_number
+      };
+    } catch (err) {
+      console.error('주문 생성 실패:', err);
       return {
         success: false,
-        message: stockCheck.issues.join('\n')
+        message: err.message || '주문 생성에 실패했습니다.'
       };
     }
-
-    // 재고 차감
-    const updatedInventory = inventory.map(invItem => {
-      const cartItem = cartItems.find(ci => ci.name === invItem.name);
-      if (cartItem) {
-        return { ...invItem, stock: invItem.stock - cartItem.quantity };
-      }
-      return invItem;
-    });
-
-    // 주문 생성
-    const { date, time } = formatDateTime();
-    const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    
-    const newOrder = {
-      id: orders.length > 0 ? Math.max(...orders.map(o => o.id)) + 1 : 1,
-      orderNumber: generateOrderNumber(),
-      date,
-      time,
-      items: cartItems.map(item => ({
-        name: item.name,
-        quantity: item.quantity,
-        price: item.price
-      })),
-      total,
-      status: '주문 접수'
-    };
-
-    setInventory(updatedInventory);
-    setOrders(prevOrders => [newOrder, ...prevOrders]);
-
-    return {
-      success: true,
-      message: '주문이 완료되었습니다!',
-      orderNumber: newOrder.orderNumber
-    };
-  }, [inventory, orders, checkStock, formatDateTime, generateOrderNumber]);
+  }, [loadOrders, loadInventory]);
 
   // 재고 업데이트 함수
-  const updateInventory = useCallback((id, newStock) => {
-    setInventory(prevInventory =>
-      prevInventory.map(item =>
-        item.id === id ? { ...item, stock: newStock } : item
-      )
-    );
-  }, []);
+  const updateInventory = useCallback(async (id, newStock) => {
+    try {
+      await menuAPI.updateStock(id, newStock);
+      // 재고 목록 새로고침
+      await loadInventory();
+      return { success: true };
+    } catch (err) {
+      console.error('재고 업데이트 실패:', err);
+      return { success: false, message: err.message };
+    }
+  }, [loadInventory]);
 
   // 주문 상태 업데이트 함수
-  const updateOrderStatus = useCallback((orderId, newStatus) => {
-    setOrders(prevOrders =>
-      prevOrders.map(order =>
-        order.id === orderId ? { ...order, status: newStatus } : order
-      )
-    );
-  }, []);
+  const updateOrderStatus = useCallback(async (orderId, newStatus) => {
+    try {
+      await orderAPI.updateOrderStatus(orderId, newStatus);
+      // 주문 목록 새로고침
+      await loadOrders();
+      return { success: true };
+    } catch (err) {
+      console.error('주문 상태 업데이트 실패:', err);
+      return { success: false, message: err.message };
+    }
+  }, [loadOrders]);
 
   const value = {
+    menus,
     inventory,
     orders,
+    loading,
+    error,
     updateInventory,
     updateOrderStatus,
     addOrder,
-    checkStock
+    checkStock,
+    loadMenus,
+    loadInventory,
+    loadOrders
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

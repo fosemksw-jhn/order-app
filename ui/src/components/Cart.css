@@ -150,6 +150,23 @@
   color: #000000;
 }
 
+.cart-item-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.option-tag {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background-color: #f0f4ff;
+  color: #4A90E2;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
 .cart-item-price-info {
   display: flex;
   align-items: center;

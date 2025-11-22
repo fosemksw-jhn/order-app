@@ -1,7 +1,11 @@
 import './Cart.css';
 
 function Cart({ isOpen, onClose, cartItems, onUpdateQuantity, onRemoveItem, onCheckout }) {
-  const totalPrice = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+  const totalPrice = cartItems.reduce((total, item) => {
+    // 옵션 포함 가격 사용
+    const itemPrice = item.price || (item.basePrice || 0);
+    return total + (itemPrice * item.quantity);
+  }, 0);
 
   if (!isOpen) return null;
 
@@ -43,14 +47,26 @@ function Cart({ isOpen, onClose, cartItems, onUpdateQuantity, onRemoveItem, onCh
                 <h3 className="section-title">주문 내역</h3>
                 <div className="cart-items">
                   {cartItems.map((item) => {
-                    const itemTotal = item.price * item.quantity;
+                    const itemPrice = item.price || (item.basePrice || 0);
+                    const itemTotal = itemPrice * item.quantity;
+                    const options = item.options || [];
                     return (
-                      <div key={item.id} className="cart-item">
+                      <div key={item.cartId || item.id} className="cart-item">
                         <div className="cart-item-main">
                           <div className="cart-item-info">
                             <h4 className="cart-item-name">{item.name}</h4>
+                            {options.length > 0 && (
+                              <div className="cart-item-options">
+                                {options.map((opt, idx) => (
+                                  <span key={idx} className="option-tag">
+                                    {opt.name}
+                                    {opt.price > 0 && ` (+${opt.price.toLocaleString()}원)`}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                             <div className="cart-item-price-info">
-                              <span className="cart-item-unit-price">{item.price.toLocaleString()}원</span>
+                              <span className="cart-item-unit-price">{itemPrice.toLocaleString()}원</span>
                               <span className="cart-item-quantity">× {item.quantity}</span>
                               <span className="cart-item-total">= {itemTotal.toLocaleString()}원</span>
                             </div>
@@ -58,20 +74,20 @@ function Cart({ isOpen, onClose, cartItems, onUpdateQuantity, onRemoveItem, onCh
                           <div className="cart-item-controls">
                             <button 
                               className="quantity-btn"
-                              onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
+                              onClick={() => onUpdateQuantity(item.cartId || item.id, item.quantity - 1)}
                             >
                               -
                             </button>
                             <span className="quantity">{item.quantity}</span>
                             <button 
                               className="quantity-btn"
-                              onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+                              onClick={() => onUpdateQuantity(item.cartId || item.id, item.quantity + 1)}
                             >
                               +
                             </button>
                             <button 
                               className="remove-btn"
-                              onClick={() => onRemoveItem(item.id)}
+                              onClick={() => onRemoveItem(item.cartId || item.id)}
                             >
                               삭제
                             </button>

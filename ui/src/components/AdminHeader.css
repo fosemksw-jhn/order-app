@@ -1,0 +1,94 @@
+.admin-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background-color: #FFFFFF;
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.admin-header-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+}
+
+.admin-logo {
+  flex-shrink: 0;
+}
+
+.admin-logo-main {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-logo-text {
+  font-size: 1.5rem;
+  color: #000000;
+  font-weight: bold;
+}
+
+.admin-logo-cat {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
+}
+
+.admin-logo-cat:hover {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.admin-cat-svg {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.admin-header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.admin-nav-button {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.admin-nav-button:hover {
+  background-color: #1d4ed8;
+}
+
+@media (max-width: 768px) {
+  .admin-header-container {
+    padding: 1rem;
+  }
+
+  .admin-logo-text {
+    font-size: 1.25rem;
+  }
+
+  .admin-cat-svg {
+    width: 40px;
+    height: 40px;
+  }
+
+  .admin-nav-button {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+}
+

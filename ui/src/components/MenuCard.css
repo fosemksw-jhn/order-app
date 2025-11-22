@@ -1,0 +1,90 @@
+.menu-card {
+  background-color: #FFFFFF;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.menu-image-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1rem;
+  min-height: 120px;
+}
+
+.coffee-image-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.coffee-svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.menu-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.menu-name {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #000000;
+}
+
+.menu-description {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #666666;
+  line-height: 1.5;
+}
+
+.menu-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 1rem;
+}
+
+.menu-price {
+  font-size: 1.125rem;
+  font-weight: bold;
+  color: #000000;
+}
+
+.add-to-cart-btn {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.add-to-cart-btn:hover {
+  background-color: #1d4ed8;
+}
+
+.add-to-cart-btn:active {
+  transform: scale(0.98);
+}
+

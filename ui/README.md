@@ -13,7 +13,7 @@ npm install
 `ui` 폴더에 `.env` 파일을 생성하고 다음 내용을 추가하세요:
 
 ```env
-VITE_API_BASE_URL=http://localhost:3000/api
+VITE_API_BASE_URL=메메http://localhost:3000/api
 ```
 
 **참고**: 백엔드 서버가 다른 포트에서 실행되는 경우 URL을 변경하세요.

@@ -38,7 +38,7 @@ function MenuCard({ menu, onAddToCart, isAvailable = true, stock = 0 }) {
   return (
     <div className={`menu-card ${!isAvailable ? 'out-of-stock' : ''}`}>
       <div className="menu-image-wrapper">
-        <CoffeeImage name={menu.name} />
+        <CoffeeImage name={menu.name} image={menu.image} />
         {!isAvailable && (
           <div className="out-of-stock-overlay">
             <span className="out-of-stock-text">품절</span>

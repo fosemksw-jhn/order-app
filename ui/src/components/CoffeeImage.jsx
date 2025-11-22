@@ -1,5 +1,32 @@
+import { useState } from 'react';
+
 // 커피 이미지 컴포넌트
-function CoffeeImage({ name }) {
+function CoffeeImage({ name, image }) {
+  const [imageError, setImageError] = useState(false);
+
+  // 이미지 경로가 있고 에러가 없으면 실제 이미지 표시
+  if (image && !imageError) {
+    return (
+      <div className="coffee-image-container">
+        <img 
+          src={image} 
+          alt={name}
+          className="coffee-image"
+          onError={() => setImageError(true)}
+        />
+      </div>
+    );
+  }
+
+  // 이미지가 없거나 에러가 발생하면 SVG 표시
+  return (
+    <div className="coffee-image-container">
+      {renderSVG(name)}
+    </div>
+  );
+}
+
+function renderSVG(name) {
   const getCoffeeColor = (name) => {
     const colors = {
       '아메리카노': '#6F4E37',
@@ -21,8 +48,7 @@ function CoffeeImage({ name }) {
   const isIced = name.includes('아이스');
 
   return (
-    <div className="coffee-image-container">
-      <svg width="120" height="120" viewBox="0 0 120 120" className="coffee-svg">
+    <svg width="120" height="120" viewBox="0 0 120 120" className="coffee-svg">
         {/* 컵 */}
         <ellipse cx="60" cy="100" rx="35" ry="8" fill="#E0E0E0" />
         <path d="M 25 100 Q 25 60 30 40 Q 35 20 60 20 Q 85 20 90 40 Q 95 60 95 100" 
@@ -82,7 +108,6 @@ function CoffeeImage({ name }) {
           </>
         )}
       </svg>
-    </div>
   );
 }
 

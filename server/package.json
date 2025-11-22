@@ -10,6 +10,8 @@
     "setup-db": "node scripts/setup-database.js",
     "test-connection": "node scripts/test-connection.js",
     "update-images": "node scripts/update-menu-images.js",
+    "delete-menus-no-images": "node scripts/delete-menus-without-images.js",
+    "remove-duplicates": "node scripts/remove-duplicate-menus.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
